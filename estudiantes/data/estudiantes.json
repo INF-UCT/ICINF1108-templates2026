@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "nombre": "Juan Actualizado",
+    "apellido": "Perez",
+    "email": "juan.perez@alu.uct.cl",
+    "carrera": "Ing. Civil"
+  },
+  {
+    "id": 3,
+    "nombre": "Pedro",
+    "apellido": "Diaz",
+    "email": "pedro.diaz@alu.uct.cl",
+    "carrera": "Ing. Civil Informatica"
+  }
+]
