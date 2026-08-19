@@ -1,53 +1,68 @@
-# ICINF1108-templates2026
+# CRUD Students
 
-API demostrativa con .NET (ASP.NET Core Minimal API) para practicar consultas con Postman u otro cliente HTTP.
+Proyecto NestJS que implementa un **CRUD en memoria** para la entidad `Student`. No requiere base de datos ni contenedores: los datos viven en un `Map` dentro del servicio y se pierden al reiniciar la aplicación.
 
-## Requisitos
+## Requerimientos
 
-- .NET SDK 10
+- Node.js 20+ (probado con Node 24)
+- pnpm
 
-## Clonar el repositorio
+## Resumen funcional
 
-```bash
-git clone https://github.com/INF-UCT/ICINF1108-templates2026
-cd ICINF1108-templates2026
-git checkout estudiantes_icinf-dotnet
-```
+La API expone operaciones CRUD completas sobre estudiantes bajo `/api/students`:
 
-## Restaurar dependencias
+- **Crear**: `POST /api/students`
+- **Listar**: `GET /api/students`
+- **Buscar por id**: `GET /api/students/:id`
+- **Actualizar**: `PATCH /api/students/:id`
+- **Eliminar**: `DELETE /api/students/:id`
 
-```bash
-dotnet restore
-```
+Cada estudiante tiene `id` (UUID), `name`, `email`, `age`, `createdAt` y `updatedAt`. El `email` es único: se rechaza con `409 Conflict` si ya existe.
 
-## Ejecutar el servidor
+La validación de entrada se realiza con `class-validator` a través de un `ValidationPipe` global:
 
-```bash
-dotnet run
-```
+- `name`: texto de 3 a 100 caracteres, sin etiquetas HTML.
+- `email`: dirección de correo electrónico válida.
+- `age`: entero entre 18 y 99.
 
-El servidor queda disponible en la URL que se muestre en consola (por ejemplo `http://localhost:5101`).
+## Contexto técnico
 
-## Endpoints disponibles
+- **Backend**: NestJS
+- **Almacenamiento**: en memoria (sin persistencia)
+- **Validación**: `class-validator` + `class-transformer`
+- **Documentación**: Swagger en `/docs`
 
-| Metodo | Ruta                        | Descripcion                  |
-|--------|-----------------------------|-------------------------------|
-| GET    | `/api/estudiantes`          | Listar todos los estudiantes  |
-| GET    | `/api/estudiantes/{id}`     | Obtener un estudiante por id  |
-| POST   | `/api/estudiantes`          | Crear un estudiante           |
-| PUT    | `/api/estudiantes/{id}`     | Actualizar un estudiante      |
-| DELETE | `/api/estudiantes/{id}`     | Eliminar un estudiante        |
+## Ejecución local
 
-Ejemplo de body para `POST` y `PUT`:
+1. Instalar dependencias:
 
-```json
-{
-  "nombre": "Pedro",
-  "apellido": "Diaz",
-  "email": "pedro.diaz@alu.uct.cl",
-  "carrera": "Ingenieria Civil Informatica"
-}
-```
+   ```bash
+   pnpm install
+   ```
 
-Los datos se guardan en `Data/estudiantes.json`. Las requests con datos invalidos (campos vacios, email mal formado) devuelven `400 Bad Request` con el detalle de los errores.
+2. Levantar el servidor en modo desarrollo:
 
+   ```bash
+   pnpm run start:dev
+   ```
+
+   O usando Make:
+
+   ```bash
+   make install
+   make dev
+   ```
+
+La aplicación queda disponible en:
+
+- `http://localhost:3000`
+- `http://localhost:3000/docs`
+
+## Comandos útiles
+
+- `make dev` — arranca NestJS en modo watch
+- `make build` — compila el proyecto
+- `make lint` — ejecuta ESLint
+- `make format` — formatea el código
+- `make format-check` — verifica el formato
+- `make clean` — elimina `dist`, `coverage` y `node_modules`
