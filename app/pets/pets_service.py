@@ -5,12 +5,12 @@ from fastapi import HTTPException, status
 
 from app.pets.pets_schemas import CreatePetDto, Pet, UpdatePetDto
 from app.shared.in_memory_store import InMemoryStore
-from app.students.students_service import StudentsService
+from app.students.students_service import StudentsService, students_service
 
 
 class PetsService:
-    def __init__(self, students_service: StudentsService) -> None:
-        self.students_service = students_service
+    def __init__(self, students: StudentsService) -> None:
+        self.students_service = students
         self.store: InMemoryStore[Pet] = InMemoryStore()
 
     def find_all_for_student(self, student_id: str) -> list[Pet]:
@@ -71,3 +71,6 @@ class PetsService:
 
     def assert_student_exists(self, student_id: str) -> None:
         self.students_service.find_by_id(student_id)
+
+
+pets_service = PetsService(students_service)

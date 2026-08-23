@@ -1,16 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.pets.pets_router import create_pets_router
-from app.pets.pets_service import PetsService
-from app.students.students_router import create_students_router
-from app.students.students_service import StudentsService
+from app.pets.pets_controller import router as pets_router
+from app.students.students_controller import router as students_router
 
 
 def create_app() -> FastAPI:
-    students_service = StudentsService()
-    pets_service = PetsService(students_service)
-
     app = FastAPI(
         title="FastAPI CRUD Students & Pets",
         description=(
@@ -26,8 +21,8 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    app.include_router(create_students_router(students_service, pets_service))
-    app.include_router(create_pets_router(pets_service))
+    app.include_router(students_router)
+    app.include_router(pets_router)
 
     return app
 

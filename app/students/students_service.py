@@ -70,3 +70,6 @@ class StudentsService:
                 status_code=status.HTTP_409_CONFLICT,
                 detail="El correo electrónico ya está en uso",
             )
+
+
+students_service = StudentsService()
