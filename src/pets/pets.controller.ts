@@ -17,11 +17,7 @@ export class PetsController {
 
   @Get()
   public findAll(@Param("studentId") studentId: string) {
-    const pets = this.petsService.findAllForStudent(studentId);
-    return {
-      total: pets.length,
-      items: pets,
-    };
+    return this.petsService.findAllForStudent(studentId);
   }
 
   @Post()
@@ -29,10 +25,7 @@ export class PetsController {
     @Param("studentId") studentId: string,
     @Body() body: CreatePetDto,
   ) {
-    return {
-      ok: true,
-      payload: this.petsService.create(studentId, body),
-    };
+    return this.petsService.create(studentId, body);
   }
 
   @Patch(":petId")
@@ -41,10 +34,7 @@ export class PetsController {
     @Param("petId") petId: string,
     @Body() body: UpdatePetDto,
   ) {
-    return {
-      ok: true,
-      payload: this.petsService.update(studentId, petId, body),
-    };
+    return this.petsService.update(studentId, petId, body);
   }
 
   @Delete(":petId")
@@ -52,9 +42,6 @@ export class PetsController {
     @Param("studentId") studentId: string,
     @Param("petId") petId: string,
   ) {
-    return {
-      ok: true,
-      payload: this.petsService.delete(studentId, petId),
-    };
+    return this.petsService.delete(studentId, petId);
   }
 }

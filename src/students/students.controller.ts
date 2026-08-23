@@ -21,44 +21,28 @@ export class StudentsController {
 
   @Get()
   public findAll() {
-    const students = this.studentsService.findAll();
-    return {
-      total: students.length,
-      items: students,
-    };
+    return this.studentsService.findAll();
   }
 
   @Get(":id")
   public findById(@Param("id") id: string) {
-    return {
-      ok: true,
-      payload: this.studentsService.findById(id),
-    };
+    return this.studentsService.findById(id);
   }
 
   @Post()
   public create(@Body() body: CreateStudentDto) {
-    return {
-      ok: true,
-      payload: this.studentsService.create(body),
-    };
+    return this.studentsService.create(body);
   }
 
   @Patch(":id")
   public update(@Param("id") id: string, @Body() body: UpdateStudentDto) {
-    return {
-      ok: true,
-      payload: this.studentsService.update(id, body),
-    };
+    return this.studentsService.update(id, body);
   }
 
   @Delete(":id")
   public delete(@Param("id") id: string) {
     const deleted = this.studentsService.delete(id);
     this.petsService.deleteAllForStudent(id);
-    return {
-      ok: true,
-      payload: deleted,
-    };
+    return deleted;
   }
 }
