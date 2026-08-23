@@ -9,26 +9,21 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[Pet], response_model_exclude_none=True)
+@router.get("")
 def find_all(studentId: str) -> list[Pet]:
     return pets_service.find_all_for_student(studentId)
 
 
-@router.post(
-    "",
-    status_code=201,
-    response_model=Pet,
-    response_model_exclude_none=True,
-)
+@router.post("", status_code=201)
 def create(studentId: str, body: CreatePetDto) -> Pet:
     return pets_service.create(studentId, body)
 
 
-@router.patch("/{petId}", response_model=Pet, response_model_exclude_none=True)
+@router.patch("/{petId}")
 def update(studentId: str, petId: str, body: UpdatePetDto) -> Pet:
     return pets_service.update(studentId, petId, body)
 
 
-@router.delete("/{petId}", response_model=Pet, response_model_exclude_none=True)
+@router.delete("/{petId}")
 def delete(studentId: str, petId: str) -> Pet:
     return pets_service.delete(studentId, petId)

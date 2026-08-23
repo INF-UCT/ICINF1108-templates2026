@@ -29,7 +29,9 @@ class UpdatePetDto(BaseModel):
     name: str | None = Field(
         default=None, min_length=1, max_length=50, pattern=NO_HTML_PATTERN
     )
+
     species: str | None = Field(
         default=None, min_length=1, max_length=50, pattern=NO_HTML_PATTERN
     )
+
     age: int | None = Field(default=None, ge=0, le=100)
