@@ -12,16 +12,16 @@ Proyecto FastAPI que implementa un **CRUD en memoria** para la entidad `Student`
 La API expone operaciones CRUD completas:
 
 - **Estudiantes** bajo `/api/students`:
-  - **Crear**: `POST /api/students`
-  - **Listar**: `GET /api/students`
-  - **Buscar por id**: `GET /api/students/:id`
-  - **Actualizar**: `PATCH /api/students/:id`
-  - **Eliminar**: `DELETE /api/students/:id` (también elimina sus mascotas)
+    - **Crear**: `POST /api/students`
+    - **Listar**: `GET /api/students`
+    - **Buscar por id**: `GET /api/students/:id`
+    - **Actualizar**: `PATCH /api/students/:id`
+    - **Eliminar**: `DELETE /api/students/:id` (también elimina sus mascotas)
 - **Mascotas** anidadas bajo `/api/students/:studentId/pets`:
-  - **Listar**: `GET /api/students/:studentId/pets`
-  - **Crear**: `POST /api/students/:studentId/pets`
-  - **Actualizar**: `PATCH /api/students/:studentId/pets/:petId`
-  - **Eliminar**: `DELETE /api/students/:studentId/pets/:petId`
+    - **Listar**: `GET /api/students/:studentId/pets`
+    - **Crear**: `POST /api/students/:studentId/pets`
+    - **Actualizar**: `PATCH /api/students/:studentId/pets/:petId`
+    - **Eliminar**: `DELETE /api/students/:studentId/pets/:petId`
 
 Cada estudiante tiene `id` (UUID), `name`, `email`, `age`, `createdAt` y `updatedAt`. El `email` es único: se rechaza con `409 Conflict` si ya existe.
 
@@ -41,27 +41,27 @@ Las respuestas devuelven los datos crudos, sin envoltorios. Los errores de valid
 
 1. Instalar dependencias:
 
-   ```bash
-   make install
-   ```
+    ```bash
+    make install
+    ```
 
-   O directamente con uv:
+    O directamente con uv:
 
-   ```bash
-   uv sync
-   ```
+    ```bash
+    uv sync
+    ```
 
 2. Levantar el servidor en modo desarrollo:
 
-   ```bash
-   make dev
-   ```
+    ```bash
+    make dev
+    ```
 
-   O usando uv:
+    O usando uv:
 
-   ```bash
-   uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 3000
-   ```
+    ```bash
+    uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 3000
+    ```
 
 La aplicación queda disponible en:
 

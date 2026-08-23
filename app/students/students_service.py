@@ -60,6 +60,7 @@ class StudentsService:
     def delete(self, student_id: str) -> Student:
         existing = self.find_by_id(student_id)
         self.store.delete(student_id)
+
         return existing
 
     def assert_email_available(self, email: str) -> None:

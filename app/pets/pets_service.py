@@ -51,6 +51,7 @@ class PetsService:
     def delete(self, student_id: str, pet_id: str) -> Pet:
         existing = self.find_owned(student_id, pet_id)
         self.store.delete(pet_id)
+
         return existing
 
     def delete_all_for_student(self, student_id: str) -> None:
