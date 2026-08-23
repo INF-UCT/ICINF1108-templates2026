@@ -1,32 +1,26 @@
-.PHONY: install dev build lint format format-check clean check-tools
+.PHONY: install dev lint format format-check clean check-tools
 
 check-tools:
-	@if ! command -v node >/dev/null 2>&1; then \
-		echo "Node.js no esta instalado. Instalalo aqui: https://nodejs.org/"; \
-		exit 1; \
-	fi
-	@if ! command -v pnpm >/dev/null 2>&1; then \
-		echo "pnpm no esta instalado. Instalalo aqui: https://pnpm.io/installation"; \
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "uv no esta instalado. Instalalo aqui: https://docs.astral.sh/uv/getting-started/installation/"; \
 		exit 1; \
 	fi
 
 install: check-tools
-	pnpm install
+	uv sync
 
 dev:
-	pnpm run start:dev
-
-build:
-	pnpm run build
+	uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 3000
 
 lint:
-	pnpm run lint
+	uv run ruff check --fix app
 
 format:
-	pnpm run format
+	uv run ruff format app
 
 format-check:
-	pnpm run format:check
+	uv run ruff format --check app
 
 clean:
-	rm -rf dist coverage node_modules
+	rm -rf .venv dist .ruff_cache
+	find . -type d -name "__pycache__" -prune -exec rm -rf {} +

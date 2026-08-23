@@ -1,35 +1,40 @@
-# CRUD Students
+# CRUD Students & Pets (FastAPI)
 
-Proyecto NestJS que implementa un **CRUD en memoria** para la entidad `Student`. No requiere base de datos ni contenedores: los datos viven en un `Map` dentro del servicio y se pierden al reiniciar la aplicación.
+Proyecto FastAPI que implementa un **CRUD en memoria** para la entidad `Student` y sus mascotas (`Pet`). No requiere base de datos ni contenedores: los datos viven en un diccionario dentro del servicio y se pierden al reiniciar la aplicación.
 
 ## Requerimientos
 
-- Node.js 20+ (probado con Node 24)
-- pnpm
+- Python 3.13+ (gestionado automáticamente por [uv](https://docs.astral.sh/uv/))
+- uv
 
 ## Resumen funcional
 
-La API expone operaciones CRUD completas sobre estudiantes bajo `/api/students`:
+La API expone operaciones CRUD completas:
 
-- **Crear**: `POST /api/students`
-- **Listar**: `GET /api/students`
-- **Buscar por id**: `GET /api/students/:id`
-- **Actualizar**: `PATCH /api/students/:id`
-- **Eliminar**: `DELETE /api/students/:id`
+- **Estudiantes** bajo `/api/students`:
+  - **Crear**: `POST /api/students`
+  - **Listar**: `GET /api/students`
+  - **Buscar por id**: `GET /api/students/:id`
+  - **Actualizar**: `PATCH /api/students/:id`
+  - **Eliminar**: `DELETE /api/students/:id` (también elimina sus mascotas)
+- **Mascotas** anidadas bajo `/api/students/:studentId/pets`:
+  - **Listar**: `GET /api/students/:studentId/pets`
+  - **Crear**: `POST /api/students/:studentId/pets`
+  - **Actualizar**: `PATCH /api/students/:studentId/pets/:petId`
+  - **Eliminar**: `DELETE /api/students/:studentId/pets/:petId`
 
 Cada estudiante tiene `id` (UUID), `name`, `email`, `age`, `createdAt` y `updatedAt`. El `email` es único: se rechaza con `409 Conflict` si ya existe.
 
-La validación de entrada se realiza con `class-validator` a través de un `ValidationPipe` global:
+Cada mascota tiene `id` (UUID), `studentId`, `name`, `species`, `age` (opcional), `createdAt` y `updatedAt`. Solo puede operar sobre su estudiante dueño.
 
-- `name`: texto de 3 a 100 caracteres, sin etiquetas HTML.
-- `email`: dirección de correo electrónico válida.
-- `age`: entero entre 18 y 99.
+Las respuestas devuelven los datos crudos, sin envoltorios. Los errores de validación usan el formato nativo de FastAPI (`422`) y las excepciones HTTP los códigos estándar (`404`, `409`).
 
 ## Contexto técnico
 
-- **Backend**: NestJS
+- **Backend**: FastAPI
 - **Almacenamiento**: en memoria (sin persistencia)
-- **Validación**: `class-validator` + `class-transformer`
+- **Validación**: Pydantic v2
+- **Gestor de dependencias**: uv
 - **Documentación**: Swagger en `/docs`
 
 ## Ejecución local
@@ -37,20 +42,25 @@ La validación de entrada se realiza con `class-validator` a través de un `Vali
 1. Instalar dependencias:
 
    ```bash
-   pnpm install
+   make install
+   ```
+
+   O directamente con uv:
+
+   ```bash
+   uv sync
    ```
 
 2. Levantar el servidor en modo desarrollo:
 
    ```bash
-   pnpm run start:dev
+   make dev
    ```
 
-   O usando Make:
+   O usando uv:
 
    ```bash
-   make install
-   make dev
+   uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 3000
    ```
 
 La aplicación queda disponible en:
@@ -60,9 +70,9 @@ La aplicación queda disponible en:
 
 ## Comandos útiles
 
-- `make dev` — arranca NestJS en modo watch
-- `make build` — compila el proyecto
-- `make lint` — ejecuta ESLint
-- `make format` — formatea el código
+- `make install` — sincroniza dependencias con uv
+- `make dev` — arranca uvicorn en modo reload
+- `make lint` — ejecuta Ruff (con autocorrección)
+- `make format` — formatea el código con Ruff
 - `make format-check` — verifica el formato
-- `make clean` — elimina `dist`, `coverage` y `node_modules`
+- `make clean` — elimina `.venv`, cachés y artefactos
