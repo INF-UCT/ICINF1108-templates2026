@@ -1,32 +1,28 @@
-@estudiantes_icinf_HostAddress = http://localhost:5199
+@estudiantes_icinf_HostAddress = http://localhost:5101
 
 ### Listar todos los estudiantes
-GET {{estudiantes_icinf_HostAddress}}/api/estudiantes
+GET {{estudiantes_icinf_HostAddress}}/api/students
 
 ### Obtener un estudiante por id
-GET {{estudiantes_icinf_HostAddress}}/api/estudiantes/1
+GET {{estudiantes_icinf_HostAddress}}/api/students/5f8a1b2c-3d4e-4f5a-8b6c-7d8e9f0a1b2c
 
 ### Crear un estudiante
-POST {{estudiantes_icinf_HostAddress}}/api/estudiantes
+POST {{estudiantes_icinf_HostAddress}}/api/students
 Content-Type: application/json
 
 {
-  "nombre": "Pedro",
-  "apellido": "Diaz",
+  "name": "Pedro Diaz",
   "email": "pedro.diaz@alu.uct.cl",
-  "carrera": "Ingenieria Civil Informatica"
+  "age": 22
 }
 
-### Actualizar un estudiante
-PUT {{estudiantes_icinf_HostAddress}}/api/estudiantes/1
+### Actualizar un estudiante (parcial)
+PATCH {{estudiantes_icinf_HostAddress}}/api/students/5f8a1b2c-3d4e-4f5a-8b6c-7d8e9f0a1b2c
 Content-Type: application/json
 
 {
-  "nombre": "Juan Actualizado",
-  "apellido": "Perez",
-  "email": "juan.perez@alu.uct.cl",
-  "carrera": "Ingenieria Civil Informatica"
+  "age": 21
 }
 
 ### Eliminar un estudiante
-DELETE {{estudiantes_icinf_HostAddress}}/api/estudiantes/1
+DELETE {{estudiantes_icinf_HostAddress}}/api/students/5f8a1b2c-3d4e-4f5a-8b6c-7d8e9f0a1b2c

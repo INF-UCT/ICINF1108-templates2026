@@ -6,19 +6,19 @@ using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
-builder.Services.AddSingleton<IEstudianteRepository, JsonEstudianteRepository>();
-builder.Services.AddScoped<IValidator<Estudiante>, EstudianteValidator>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton<IStudentRepository, JsonStudentRepository>();
+builder.Services.AddScoped<IValidator<CreateStudentDto>, CreateStudentValidator>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.UseSwagger();
+app.UseSwaggerUI(c => c.RoutePrefix = "docs");
 
 app.UseHttpsRedirection();
 
-app.MapEstudianteEndpoints();
+app.MapStudentEndpoints();
 
 app.Run();
