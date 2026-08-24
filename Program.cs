@@ -10,9 +10,6 @@ builder.Services.AddOpenApi();
 builder.Services.AddSingleton<IEstudianteRepository, JsonEstudianteRepository>();
 builder.Services.AddScoped<IValidator<Estudiante>, EstudianteValidator>();
 
-builder.Services.AddSingleton<IProfesorRepository, JsonProfesorRepository>();
-builder.Services.AddScoped<IValidator<Profesor>, ProfesorValidator>();
-
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -23,6 +20,5 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapEstudianteEndpoints();
-app.MapProfesorEndpoints();
 
 app.Run();
