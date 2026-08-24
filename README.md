@@ -2,6 +2,7 @@
 
 API demostrativa con Django para practicar consultas con Postman u otro cliente HTTP.
 
+
 ## Requisitos
 
 - Python 3.9 o superior
@@ -46,23 +47,56 @@ El servidor queda disponible en `http://localhost:8000`.
 
 ## Endpoints disponibles
 
-| Metodo | Ruta                        | Descripcion               |
-|--------|-----------------------------|----------------------------|
-| GET    | `/api/estudiantes/`         | Listar todos los estudiantes |
-| GET    | `/api/estudiantes/<id>/`    | Obtener un estudiante por id |
-| POST   | `/api/estudiantes/`         | Crear un estudiante        |
-| PUT    | `/api/estudiantes/<id>/`    | Actualizar un estudiante   |
-| DELETE | `/api/estudiantes/<id>/`    | Eliminar un estudiante     |
+La API expone operaciones CRUD completas sobre estudiantes bajo `/api/students`:
 
-Ejemplo de body para `POST` y `PUT`:
+| Metodo | Ruta                    | Descripcion              |
+|--------|-------------------------|---------------------------|
+| POST   | `/api/students`         | Crear un estudiante       |
+| GET    | `/api/students`         | Listar todos los estudiantes |
+| GET    | `/api/students/:id`     | Buscar un estudiante por id |
+| PATCH  | `/api/students/:id`     | Actualizar un estudiante  |
+| DELETE | `/api/students/:id`     | Eliminar un estudiante    |
+
+En Django la ruta lleva slash final (`/api/students/`).
+
+## Modelo de datos
+
+Cada estudiante tiene:
+
+| Campo       | Tipo             | Descripcion                          |
+|-------------|------------------|----------------------------------------|
+| `id`        | UUID             | Generado automaticamente al crear      |
+| `name`      | string           | 3 a 100 caracteres                     |
+| `email`     | string           | Direccion de correo valida y **unica** |
+| `age`       | int              | Entre 18 y 99                          |
+| `createdAt` | datetime (ISO)   | Generado automaticamente al crear      |
+| `updatedAt` | datetime (ISO)   | Actualizado en cada `PATCH`            |
+
+Ejemplo de body para `POST`:
 
 ```json
 {
-  "nombre": "Pedro",
-  "apellido": "Diaz",
+  "name": "Pedro Diaz",
   "email": "pedro.diaz@alu.uct.cl",
-  "carrera": "Ingenieria Civil Informatica"
+  "age": 22
 }
 ```
 
-Los datos se guardan en `estudiantes/data/estudiantes.json`.
+`PATCH` acepta cualquier subconjunto de `name`, `email`, `age` (actualizacion parcial).
+
+## Validaciones y errores
+
+La validacion de entrada es manual (`students/validation.py`), equivalente en reglas a `class-validator`:
+
+- `name`: texto de 3 a 100 caracteres, sin etiquetas HTML.
+- `email`: direccion de correo valida.
+- `age`: entero entre 18 y 99.
+
+
+Las respuestas de exito devuelven **el JSON del recurso directamente**.
+
+Los datos se guardan en `students/data/students.json`.
+
+## Documentacion interactiva
+
+Swagger UI disponible en `http://localhost:8000/docs/` 

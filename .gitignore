@@ -8,6 +8,8 @@ env/
 
 db.sqlite3
 
+bin/
+obj/
 .env
 
 staticfiles/
