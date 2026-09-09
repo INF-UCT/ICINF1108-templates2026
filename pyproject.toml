@@ -1,13 +1,14 @@
 [project]
 name = "estudiantes-fastapi"
 version = "0.1.0"
-description = "CRUD en memoria de estudiantes y sus mascotas con FastAPI"
+description = "CRUD de estudiantes y sus mascotas con FastAPI y SQLite"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.13"
 dependencies = [
     "email-validator>=2.2.0",
     "fastapi>=0.115.0",
+    "sqlalchemy>=2.0.0",
     "uvicorn[standard]>=0.30.0",
 ]
 

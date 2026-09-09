@@ -484,3 +484,9 @@ $RECYCLE.BIN/
 dist/
 node_modules/
 tsconfig.tsbuildinfo
+
+# SQLite
+data.db
+data.db-journal
+data.db-wal
+data.db-shm
