@@ -1,80 +1,101 @@
-import { randomUUID } from "node:crypto";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { randomUUID } from "node:crypto"
+import { InjectRepository } from "@nestjs/typeorm"
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common"
 
-import type { Pet } from "./pets.entity";
-import { CreatePetDto, UpdatePetDto } from "@/pets/pets.dtos";
-import { InMemoryStore } from "@/shared/in-memory-store";
-import { StudentsService } from "@/students/students.service";
+import { Pet } from "./pets.entity"
+import { Repository } from "typeorm"
+import { CreatePetDto, UpdatePetDto } from "@/pets/pets.dtos"
+import { StudentsService } from "@/students/students.service"
 
 @Injectable()
 export class PetsService {
-  private readonly store = new InMemoryStore<Pet>();
+	constructor(
+		@InjectRepository(Pet)
+		private readonly petsRepository: Repository<Pet>,
+		private readonly studentsService: StudentsService,
+	) {}
 
-  constructor(private readonly studentsService: StudentsService) {}
+	public async findAllForStudent(studentId: string): Promise<Pet[]> {
+		await this.assertStudentExists(studentId)
 
-  public findAllForStudent(studentId: string): Pet[] {
-    this.assertStudentExists(studentId);
-    return this.store
-      .findBy((pet) => pet.studentId === studentId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }
+		return this.petsRepository.find({
+			where: { studentId },
+			order: { createdAt: "DESC" },
+		})
+	}
 
-  public create(studentId: string, data: CreatePetDto): Pet {
-    this.assertStudentExists(studentId);
+	public async create(studentId: string, data: CreatePetDto): Promise<Pet> {
+		await this.assertStudentExists(studentId)
+		await this.assertNoConflicts(studentId, data)
 
-    const now = new Date();
-    const pet: Pet = {
-      id: randomUUID(),
-      studentId,
-      name: data.name,
-      species: data.species,
-      age: data.age,
-      createdAt: now,
-      updatedAt: now,
-    };
+		const pet = this.petsRepository.create({
+			id: randomUUID(),
+			studentId,
+			name: data.name,
+			species: data.species,
+			age: data.age,
+		})
 
-    this.store.set(pet);
-    return pet;
-  }
+		return this.petsRepository.save(pet)
+	}
 
-  public update(studentId: string, petId: string, data: UpdatePetDto): Pet {
-    const existing = this.findOwned(studentId, petId);
+	public async update(studentId: string, petId: string, data: UpdatePetDto): Promise<Pet> {
+		const existing = await this.findOwned(studentId, petId)
+		await this.assertNoConflicts(studentId, data, petId)
 
-    const updated: Pet = {
-      ...existing,
-      name: data.name ?? existing.name,
-      species: data.species ?? existing.species,
-      age: data.age ?? existing.age,
-      updatedAt: new Date(),
-    };
+		Object.assign(existing, {
+			name: data.name ?? existing.name,
+			species: data.species ?? existing.species,
+			age: data.age ?? existing.age,
+		})
 
-    this.store.set(updated);
-    return updated;
-  }
+		return this.petsRepository.save(existing)
+	}
 
-  public delete(studentId: string, petId: string): Pet {
-    const existing = this.findOwned(studentId, petId);
-    this.store.delete(petId);
-    return existing;
-  }
+	public async delete(studentId: string, petId: string): Promise<Pet> {
+		const existing = await this.findOwned(studentId, petId)
+		await this.petsRepository.delete(petId)
+		return existing
+	}
 
-  public deleteAllForStudent(studentId: string): void {
-    this.store.deleteBy((pet) => pet.studentId === studentId);
-  }
+	public async deleteAllForStudent(studentId: string): Promise<void> {
+		await this.petsRepository.delete({ studentId })
+	}
 
-  private findOwned(studentId: string, petId: string): Pet {
-    this.assertStudentExists(studentId);
+	private async findOwned(studentId: string, petId: string): Promise<Pet> {
+		await this.assertStudentExists(studentId)
 
-    const pet = this.store.get(petId);
+		const pet = await this.petsRepository.findOne({ where: { id: petId } })
 
-    if (!pet || pet.studentId !== studentId) {
-      throw new NotFoundException("Mascota no encontrada");
-    }
+		if (!pet || pet.studentId !== studentId) {
+			throw new NotFoundException("Mascota no encontrada")
+		}
 
-    return pet;
-  }
+		return pet
+	}
 
-  private assertStudentExists(studentId: string) {
-    this.studentsService.findById(studentId);
-  }
+	private async assertStudentExists(studentId: string): Promise<void> {
+		await this.studentsService.findById(studentId)
+	}
+
+	private async assertNoConflicts(
+		studentId: string,
+		data: { name?: string },
+		exceptId?: string,
+	): Promise<void> {
+		if (!data.name) return
+
+		const existing = await this.petsRepository.findOne({
+			where: { studentId, name: data.name },
+		})
+
+		if (existing && existing.id !== exceptId) {
+			throw new ConflictException({
+				message: "Conflicto con datos existentes",
+				errors: {
+					name: { message: "Ya tienes una mascota con ese nombre" },
+				},
+			})
+		}
+	}
 }

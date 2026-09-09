@@ -1,83 +1,96 @@
-import { randomUUID } from "node:crypto";
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { randomUUID } from "node:crypto"
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common"
+import { InjectRepository } from "@nestjs/typeorm"
+import { Repository } from "typeorm"
 
-import type { Student } from "./students.entity";
-import { CreateStudentDto, UpdateStudentDto } from "@/students/students.dtos";
-import { InMemoryStore } from "@/shared/in-memory-store";
+import { Student } from "./students.entity"
+import { CreateStudentDto, UpdateStudentDto } from "@/students/students.dtos"
+import type { ValidationErrors } from "@/shared/response"
 
 @Injectable()
 export class StudentsService {
-  private readonly store = new InMemoryStore<Student>();
+	constructor(
+		@InjectRepository(Student)
+		private readonly studentsRepository: Repository<Student>,
+	) {}
 
-  public findAll(): Student[] {
-    return this.store
-      .findAll()
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }
+	public findAll(): Promise<Student[]> {
+		return this.studentsRepository.find({ order: { createdAt: "DESC" } })
+	}
 
-  public findById(id: string): Student {
-    const student = this.store.get(id);
+	public async findById(id: string): Promise<Student> {
+		const student = await this.studentsRepository.findOne({ where: { id } })
 
-    if (!student) {
-      throw new NotFoundException("Estudiante no encontrado");
-    }
+		if (!student) {
+			throw new NotFoundException("Estudiante no encontrado")
+		}
 
-    return student;
-  }
+		return student
+	}
 
-  public create(data: CreateStudentDto): Student {
-    this.assertEmailAvailable(data.email);
+	public async create(data: CreateStudentDto): Promise<Student> {
+		await this.assertNoConflicts(data)
 
-    const now = new Date();
-    const student: Student = {
-      id: randomUUID(),
-      name: data.name,
-      email: data.email,
-      age: data.age,
-      createdAt: now,
-      updatedAt: now,
-    };
+		const student = this.studentsRepository.create({
+			id: randomUUID(),
+			name: data.name,
+			username: data.username,
+			email: data.email,
+			age: data.age,
+		})
 
-    this.store.set(student);
-    return student;
-  }
+		return this.studentsRepository.save(student)
+	}
 
-  public update(id: string, data: UpdateStudentDto): Student {
-    const existing = this.findById(id);
+	public async update(id: string, data: UpdateStudentDto): Promise<Student> {
+		const existing = await this.findById(id)
+		await this.assertNoConflicts(data, id)
 
-    if (data.email && data.email !== existing.email) {
-      this.assertEmailAvailable(data.email);
-    }
+		Object.assign(existing, {
+			name: data.name ?? existing.name,
+			username: data.username ?? existing.username,
+			email: data.email ?? existing.email,
+			age: data.age ?? existing.age,
+		})
 
-    const updated: Student = {
-      ...existing,
-      name: data.name ?? existing.name,
-      email: data.email ?? existing.email,
-      age: data.age ?? existing.age,
-      updatedAt: new Date(),
-    };
+		return this.studentsRepository.save(existing)
+	}
 
-    this.store.set(updated);
-    return updated;
-  }
+	public async delete(id: string): Promise<Student> {
+		const existing = await this.findById(id)
+		await this.studentsRepository.delete(id)
+		return existing
+	}
 
-  public delete(id: string): Student {
-    const existing = this.findById(id);
-    this.store.delete(id);
-    return existing;
-  }
+	private async assertNoConflicts(
+		data: { email?: string; username?: string },
+		exceptId?: string,
+	): Promise<void> {
+		const conflicts: ValidationErrors = {}
 
-  private assertEmailAvailable(email: string) {
-    const exists = this.store
-      .findAll()
-      .some((student) => student.email === email);
+		if (data.email) {
+			const existing = await this.studentsRepository.findOne({ where: { email: data.email } })
 
-    if (exists) {
-      throw new ConflictException("El correo electrónico ya está en uso");
-    }
-  }
+			if (existing && existing.id !== exceptId) {
+				conflicts.email = { message: "El correo electrónico ya está en uso" }
+			}
+		}
+
+		if (data.username) {
+			const existing = await this.studentsRepository.findOne({
+				where: { username: data.username },
+			})
+
+			if (existing && existing.id !== exceptId) {
+				conflicts.username = { message: "El nombre de usuario ya está en uso" }
+			}
+		}
+
+		if (Object.keys(conflicts).length > 0) {
+			throw new ConflictException({
+				message: "Conflicto con datos existentes",
+				errors: conflicts,
+			})
+		}
+	}
 }
