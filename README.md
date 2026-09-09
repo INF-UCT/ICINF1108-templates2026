@@ -1,62 +1,189 @@
-# CRUD Students
+# CRUD Students & Pets
 
-Proyecto NestJS que implementa un **CRUD en memoria** para la entidad `Student`. No requiere base de datos ni contenedores: los datos viven en un `Map` dentro del servicio y se pierden al reiniciar la aplicación.
+Proyecto NestJS que implementa un **CRUD** para la entidad `Student` y sus `Pet`, con **persistencia en SQLite** (a través de TypeORM + better-sqlite3). Los datos se guardan en un archivo `data.db` local.
 
-## Requerimientos
+## Tecnologías
 
-- Node.js 20+ (probado con Node 24)
-- pnpm
+- Node.js LTS
+- HTML + JS + Tailwind CSS
 
 ## Resumen funcional
 
-La API expone operaciones CRUD completas sobre estudiantes bajo `/api/students`:
+La API expone operaciones CRUD completas sobre estudiantes y mascotas:
+
+**Estudiantes** — `/api/students`
 
 - **Crear**: `POST /api/students`
 - **Listar**: `GET /api/students`
 - **Buscar por id**: `GET /api/students/:id`
 - **Actualizar**: `PATCH /api/students/:id`
-- **Eliminar**: `DELETE /api/students/:id`
+- **Eliminar**: `DELETE /api/students/:id` (elimina también sus mascotas)
 
-Cada estudiante tiene `id` (UUID), `name`, `email`, `age`, `createdAt` y `updatedAt`. El `email` es único: se rechaza con `409 Conflict` si ya existe.
+**Mascotas** — `/api/students/:studentId/pets`
 
-La validación de entrada se realiza con `class-validator` a través de un `ValidationPipe` global:
+- **Listar**: `GET /api/students/:studentId/pets`
+- **Crear**: `POST /api/students/:studentId/pets`
+- **Actualizar**: `PATCH /api/students/:studentId/pets/:petId`
+- **Eliminar**: `DELETE /api/students/:studentId/pets/:petId`
 
-- `name`: texto de 3 a 100 caracteres, sin etiquetas HTML.
+### Modelo de datos
+
+| Estudiante | Mascota        |
+| ---------- | -------------- |
+| id (UUID)  | id (UUID)      |
+| name       | studentId      |
+| username   | name           |
+| email      | species        |
+| age        | age (opcional) |
+| createdAt  | createdAt      |
+| updatedAt  | updatedAt      |
+
+### Validación y unicidad
+
+La validación se realiza con `class-validator` a través de un `ValidationPipe` global:
+
+- `name` (estudiante): texto de 3 a 100 caracteres, sin etiquetas HTML.
+- `username`: texto de 3 a 30 caracteres, solo minúsculas, números y guiones bajos (`^[a-z0-9_]+$`).
 - `email`: dirección de correo electrónico válida.
-- `age`: entero entre 18 y 99.
+- `age` (estudiante): entero entre 18 y 99.
+- `name` / `species` (mascota): texto de 1 a 50 caracteres, sin etiquetas HTML.
+- `age` (mascota): entero entre 0 y 100 (opcional).
 
-## Contexto técnico
+Unicidad (rechazado con `409 Conflict`):
 
-- **Backend**: NestJS
-- **Almacenamiento**: en memoria (sin persistencia)
-- **Validación**: `class-validator` + `class-transformer`
-- **Documentación**: Swagger en `/docs`
+- Estudiante: `email` y `username` deben ser únicos.
+- Mascota: `name` debe ser único dentro de un mismo estudiante.
+
+## Estándar de respuesta JSON
+
+Toda respuesta de la API — exitosa o de error — usa el mismo **envelope** `ApiResponse`, definido en [`src/shared/response.ts`](src/shared/response.ts). Esto permite que el frontend interprete cualquier respuesta de forma uniforme.
+
+### Envelope común
+
+| Campo       | Tipo                | Descripción                                                               |
+| ----------- | ------------------- | ------------------------------------------------------------------------- |
+| `code`      | `number`            | Código de estado HTTP (coincide con el status de la respuesta).           |
+| `success`   | `boolean`           | `true` si la operación se completó, `false` si hubo error.                |
+| `message`   | `string`            | Resumen legible del resultado (varía según el método HTTP).               |
+| `timestamp` | `string`            | Fecha/hora en ISO 8601 de la respuesta.                                   |
+| `data`      | `object \| null`    | Datos de la operación. Presente en éxito; `null` en errores.              |
+| `error`     | `string` (opcional) | Mensaje de error para errores simples (404, 500).                         |
+| `errors`    | `object` (opcional) | Errores por campo para validación (400) y conflicto (409). Ver más abajo. |
+
+### Respuestas de éxito
+
+El interceptor global ([`response.interceptor.ts`](src/shared/response.interceptor.ts)) envuelve el retorno de los controladores en `data`:
+
+- **Recurso único** (`GET :id`, `POST`, `PATCH`, `DELETE`): `data` contiene la entidad directamente.
+- **Listado** (`GET` colección): `data` contiene `{ total, items }`.
+
+```json
+{
+	"code": 201,
+	"success": true,
+	"message": "Recurso creado",
+	"timestamp": "2026-09-09T16:49:33.368Z",
+	"data": {
+		"id": "c3600646-abe8-4be3-8096-d6ad629388e2",
+		"name": "Juan Pérez",
+		"username": "juanperez",
+		"email": "juan@example.com",
+		"age": 20,
+		"createdAt": "2026-09-09T16:49:33.000Z",
+		"updatedAt": "2026-09-09T16:49:33.000Z"
+	}
+}
+```
+
+`message` según el método HTTP:
+
+| Método   | `message`             | `code` |
+| -------- | --------------------- | ------ |
+| `GET`    | `Operación exitosa`   | 200    |
+| `POST`   | `Recurso creado`      | 201    |
+| `PATCH`  | `Recurso actualizado` | 200    |
+| `DELETE` | `Recurso eliminado`   | 200    |
+
+### Errores simples (404, 500)
+
+Los errores sin detalle por campo usan el campo `error`:
+
+```json
+{
+	"code": 404,
+	"success": false,
+	"message": "Estudiante no encontrado",
+	"timestamp": "2026-09-09T16:49:53.816Z",
+	"data": null,
+	"error": "Estudiante no encontrado"
+}
+```
+
+### Validación (400) y conflicto (409)
+
+Ambos casos comparten el **mismo esquema** para que el frontend los trate igual: el campo `errors` es un mapa `{ campo: { message } }`, donde la clave es el nombre del campo que falla.
+
+```json
+{
+	"code": 400,
+	"success": false,
+	"message": "Error de validación",
+	"timestamp": "2026-09-09T16:39:30.397Z",
+	"data": null,
+	"errors": {
+		"name": { "message": "El nombre debe tener entre 3 y 100 caracteres" },
+		"email": { "message": "El correo electrónico no es válido" }
+	}
+}
+```
+
+```json
+{
+	"code": 409,
+	"success": false,
+	"message": "Conflicto con datos existentes",
+	"timestamp": "2026-09-09T16:49:45.110Z",
+	"data": null,
+	"errors": {
+		"email": { "message": "El correo electrónico ya está en uso" }
+	}
+}
+```
+
+### Interpretación en el frontend
+
+El cliente estático (`public/`) consume este estándar de forma uniforme:
+
+- `public/js/api.js` expone `api()` (hace `fetch` y devuelve `data` en éxito o lanza el envelope en error) y `normalizeErrors()` (convierte `{ campo: { message } }` en `{ campo: message }`).
+- En los formularios, si la respuesta trae `errors`, cada mensaje se muestra bajo su input correspondiente; si trae `error`, se muestra como notificación global (toast).
 
 ## Ejecución local
 
 1. Instalar dependencias:
 
-   ```bash
-   pnpm install
-   ```
+    ```bash
+    pnpm install
+    ```
 
 2. Levantar el servidor en modo desarrollo:
 
-   ```bash
-   pnpm run start:dev
-   ```
+    ```bash
+    pnpm run start:dev
+    ```
 
-   O usando Make:
+    O usando Make:
 
-   ```bash
-   make install
-   make dev
-   ```
+    ```bash
+    make install
+    make dev
+    ```
 
 La aplicación queda disponible en:
 
 - `http://localhost:3000`
 - `http://localhost:3000/docs`
+
+> El archivo `data.db` se genera automáticamente en la raíz del proyecto y está ignorado por git.
 
 ## Comandos útiles
 
