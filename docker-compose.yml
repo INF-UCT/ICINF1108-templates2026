@@ -1,0 +1,44 @@
+name: icinf1108-templates2026
+
+services:
+  api:
+    build:
+      context: .
+      target: dev
+    image: icinf1108-templates2026:dev
+    container_name: icinf1108-api-dev
+    init: true
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: development
+      # Reliable file watching on bind mounts (WSL2 / Docker Desktop)
+      TSC_WATCHFILE: UsePollingWatchFile
+      TSC_WATCHDIRECTORY: UsePollingWatchDirectory
+    volumes:
+      # Bind-mount the source for hot reload...
+      - .:/app
+      # ...but keep the image's node_modules (native better-sqlite3 binary)
+      - /app/node_modules
+    restart: unless-stopped
+
+  api-prod:
+    profiles:
+      - prod
+    build:
+      context: .
+      target: prod
+    image: icinf1108-templates2026:prod
+    container_name: icinf1108-api-prod
+    init: true
+    ports:
+      - "${APP_PORT_PROD:-3001}:3000"
+    environment:
+      NODE_ENV: production
+    volumes:
+      # Persists /data/data.db (the app's data.db is a symlink into /data)
+      - api-data:/data
+    restart: unless-stopped
+
+volumes:
+  api-data:

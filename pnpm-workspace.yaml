@@ -1,0 +1,4 @@
+# pnpm v10+ reads shared settings from here (no longer from package.json).
+# better-sqlite3 needs its install script to build/download its native binding.
+onlyBuiltDependencies:
+  - better-sqlite3
