@@ -7,7 +7,7 @@ import { StudentsModule } from "@/students/students.module"
 	imports: [
 		TypeOrmModule.forRoot({
 			type: "better-sqlite3",
-			database: "data.db",
+			database: process.env.DB_PATH ?? "data.db",
 			autoLoadEntities: true,
 			synchronize: true,
 		}),
@@ -16,3 +16,5 @@ import { StudentsModule } from "@/students/students.module"
 	],
 })
 export class AppModule {}
+
+console.log("AppModule loaded con volumenes 2")
