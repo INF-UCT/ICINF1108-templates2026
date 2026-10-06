@@ -1,4 +1,4 @@
-.PHONY: install dev lint format format-check clean check-tools
+.PHONY: install dev prod lint format format-check clean check-tools
 
 check-tools:
 	@if ! command -v uv >/dev/null 2>&1; then \
@@ -11,6 +11,9 @@ install: check-tools
 
 dev:
 	uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 3000
+
+prod:
+	uv run uvicorn app.main:app --host 0.0.0.0 --port 3000
 
 lint:
 	uv run ruff check --fix app

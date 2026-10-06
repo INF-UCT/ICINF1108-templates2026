@@ -1,9 +1,13 @@
+import os
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-DATABASE_URL = "sqlite:///data.db"
+# Ruta del archivo SQLite. Se puede sobreescribir con la variable de entorno
+# DB_PATH (por ejemplo, para apuntar a un volumen en Docker: /data/data.db).
+DB_PATH = os.getenv("DB_PATH", "data.db")
+DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
