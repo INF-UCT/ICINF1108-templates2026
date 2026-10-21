@@ -4,12 +4,6 @@ dist
 coverage
 *.tsbuildinfo
 
-# Local database (SQLite)
-data.db
-data.db-journal
-data.db-wal
-data.db-shm
-
 # Environment / secrets
 .env
 .env.*

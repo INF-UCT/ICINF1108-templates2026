@@ -18,14 +18,14 @@ En Docker hay cuatro formas de conectar almacenamiento a un contenedor. Se confi
 
 | Tipo                 | Ejemplo (compose)   | ¿Dónde vive?                  | ¿Lo maneja? | Sobrevive a `docker rm` |
 | -------------------- | ------------------- | ----------------------------- | ----------- | ----------------------- |
-| **Volumen nombrado** | `api-data:/data`    | Área de Docker (`volume ls`)  | Docker      | Sí                      |
+| **Volumen nombrado** | `datos:/data`       | Área de Docker (`volume ls`)  | Docker      | Sí                      |
 | **Volumen anónimo**  | `/app/node_modules` | Área de Docker, con ID random | Docker      | Solo si no lo borras    |
 | **Bind mount**       | `.:/app`            | Una carpeta tuya del host     | Tú          | Sí (es tu carpeta)      |
 | **tmpfs**            | `tmpfs: /tmp`       | Memoria RAM                   | Docker      | No (se borra al parar)  |
 
 ### Volumen nombrado
 
-Tiene nombre (`api-data`) y Docker decide dónde guardarlo físicamente. Es la opción recomendada para **datos persistentes** (bases de datos, uploads). Es portable: no depende de rutas de tu máquina.
+Tiene nombre (`datos`) y Docker decide dónde guardarlo físicamente. Es la opción recomendada para **datos persistentes** (bases de datos, uploads). Es portable: no depende de rutas de tu máquina.
 
 ### Volumen anónimo
 
@@ -45,13 +45,13 @@ services:
         volumes:
             - .:/app # bind mount
             - /app/node_modules # volumen anónimo
-            - api-data:/data # volumen nombrado
+            - datos:/data # volumen nombrado
 
 volumes:
-    api-data: # aquí Docker crea el volumen con este nombre
+    datos: # aquí Docker crea el volumen con este nombre
 ```
 
-Sin la declaración global, `api-data` no es un volumen nombrado.
+Sin la declaración global, `datos` no es un volumen nombrado.
 
 ## En este proyecto
 
@@ -64,7 +64,9 @@ volumes:
 ```
 
 - **`.:/app` (bind mount):** el código de tu máquina se monta en el contenedor. Editas `src/*.ts` y el watcher recompila y reinicia solo (hot reload).
-- **`/app/node_modules` (volumen anónimo):** "tapa" la carpeta `node_modules` del host para que no se mezcle con la del contenedor. Es importante porque `better-sqlite3` trae un binario nativo compilado **para el contenedor**; si se usara el `node_modules` del host, podría no coincidir y fallar.
+- **`/app/node_modules` (volumen anónimo):** "tapa" la carpeta `node_modules` del host para que no se mezcle con la del contenedor. Así se usan las dependencias instaladas dentro de la imagen y no las de tu máquina.
+
+> Este proyecto guarda los datos **en memoria** (repositorios con diccionarios), así que no necesita un volumen nombrado para persistir nada: al reiniciar, los datos se pierden.
 
 ## Casos de uso típicos
 

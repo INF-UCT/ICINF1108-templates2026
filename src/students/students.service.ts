@@ -1,25 +1,23 @@
 import { randomUUID } from "node:crypto"
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { Repository } from "typeorm"
 
 import { Student } from "./students.entity"
+import { StudentsRepository } from "./students.repository"
 import { CreateStudentDto, UpdateStudentDto } from "@/students/students.dtos"
 import type { ValidationErrors } from "@/shared/response"
 
 @Injectable()
 export class StudentsService {
-	constructor(
-		@InjectRepository(Student)
-		private readonly studentsRepository: Repository<Student>,
-	) {}
+	constructor(private readonly studentsRepository: StudentsRepository) {}
 
-	public findAll(): Promise<Student[]> {
-		return this.studentsRepository.find({ order: { createdAt: "DESC" } })
+	public async findAll(): Promise<Student[]> {
+		return this.studentsRepository
+			.findAll()
+			.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 	}
 
 	public async findById(id: string): Promise<Student> {
-		const student = await this.studentsRepository.findOne({ where: { id } })
+		const student = this.studentsRepository.findById(id)
 
 		if (!student) {
 			throw new NotFoundException("Estudiante no encontrado")
@@ -29,47 +27,52 @@ export class StudentsService {
 	}
 
 	public async create(data: CreateStudentDto): Promise<Student> {
-		await this.assertNoConflicts(data)
+		this.assertNoConflicts(data)
 
-		const student = this.studentsRepository.create({
+		const now = new Date()
+		const student: Student = {
 			id: randomUUID(),
 			name: data.name,
 			username: data.username,
 			email: data.email,
 			age: data.age,
-		})
+			createdAt: now,
+			updatedAt: now,
+		}
 
 		return this.studentsRepository.save(student)
 	}
 
 	public async update(id: string, data: UpdateStudentDto): Promise<Student> {
 		const existing = await this.findById(id)
-		await this.assertNoConflicts(data, id)
+		this.assertNoConflicts(data, id)
 
-		Object.assign(existing, {
+		const updated: Student = {
+			...existing,
 			name: data.name ?? existing.name,
 			username: data.username ?? existing.username,
 			email: data.email ?? existing.email,
 			age: data.age ?? existing.age,
-		})
+			updatedAt: new Date(),
+		}
 
-		return this.studentsRepository.save(existing)
+		return this.studentsRepository.save(updated)
 	}
 
 	public async delete(id: string): Promise<Student> {
 		const existing = await this.findById(id)
-		await this.studentsRepository.delete(id)
+		this.studentsRepository.delete(id)
 		return existing
 	}
 
-	private async assertNoConflicts(
+	private assertNoConflicts(
 		data: { email?: string; username?: string },
 		exceptId?: string,
-	): Promise<void> {
+	): void {
 		const conflicts: ValidationErrors = {}
 
 		if (data.email) {
-			const existing = await this.studentsRepository.findOne({ where: { email: data.email } })
+			const existing = this.studentsRepository.findByEmail(data.email)
 
 			if (existing && existing.id !== exceptId) {
 				conflicts.email = { message: "El correo electrónico ya está en uso" }
@@ -77,9 +80,7 @@ export class StudentsService {
 		}
 
 		if (data.username) {
-			const existing = await this.studentsRepository.findOne({
-				where: { username: data.username },
-			})
+			const existing = this.studentsRepository.findByUsername(data.username)
 
 			if (existing && existing.id !== exceptId) {
 				conflicts.username = { message: "El nombre de usuario ya está en uso" }

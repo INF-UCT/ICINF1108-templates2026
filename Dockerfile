@@ -6,7 +6,7 @@ WORKDIR /app
 
 RUN npm install -g pnpm@10
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
@@ -34,18 +34,16 @@ WORKDIR /app
 # The app is executed with `node dist/main`, not pnpm. If we did not prune,
 # devDependencies would ship inside the image. pnpm stays in the final image
 # as a side effect of this step (small, harmless), and could be removed with
+# `npm uninstall -g pnpm` if a truly minimal image were required.
 RUN npm install -g pnpm@10
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/public ./public
 
 # Remove devDependencies from node_modules, leaving only what runtime needs.
 RUN pnpm prune --prod
-
-# SQLite writes to DB_PATH (defaults to data.db). Keep it on a writable path.
-RUN mkdir /data && chown node:node /data
 
 USER node
 

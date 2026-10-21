@@ -1,6 +1,6 @@
 # CRUD Students & Pets
 
-Proyecto NestJS que implementa un **CRUD** para la entidad `Student` y sus `Pet`, con **persistencia en SQLite** (a través de TypeORM + better-sqlite3). Los datos se guardan en un archivo `data.db` local.
+Proyecto NestJS que implementa un **CRUD** para la entidad `Student` y sus `Pet`, con **almacenamiento en memoria** a través de repositorios respaldados por diccionarios (`Map`). Los datos viven mientras el proceso esté corriendo.
 
 ## Tecnologías
 
@@ -183,7 +183,7 @@ La aplicación queda disponible en:
 - `http://localhost:3000`
 - `http://localhost:3000/docs`
 
-> El archivo `data.db` se genera automáticamente en la raíz del proyecto y está ignorado por git.
+> Al ser un almacenamiento en memoria, los datos se pierden cada vez que se reinicia el servidor (incluido el reload de desarrollo).
 
 ## Comandos útiles
 
