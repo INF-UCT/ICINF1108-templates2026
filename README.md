@@ -13,7 +13,7 @@ La API expone operaciones CRUD completas sobre estudiantes y mascotas:
 
 **Estudiantes** — `/api/students`
 
-- **Crear**: `POST /api/students`
+- **Crear**: `POST /api/students` (opcionalmente con `pets[]` para crear el estudiante y sus mascotas en una sola petición)
 - **Listar**: `GET /api/students`
 - **Buscar por id**: `GET /api/students/:id`
 - **Actualizar**: `PATCH /api/students/:id`
@@ -25,6 +25,27 @@ La API expone operaciones CRUD completas sobre estudiantes y mascotas:
 - **Crear**: `POST /api/students/:studentId/pets`
 - **Actualizar**: `PATCH /api/students/:studentId/pets/:petId`
 - **Eliminar**: `DELETE /api/students/:studentId/pets/:petId`
+
+### Alta de estudiante con mascotas
+
+`POST /api/students` acepta un arreglo opcional `pets`:
+
+```json
+{
+	"name": "Ana Pérez",
+	"username": "ana_perez",
+	"email": "ana@example.com",
+	"age": 21,
+	"pets": [
+		{ "name": "Firulais", "species": "perro", "age": 3 },
+		{ "name": "Michi", "species": "gato" }
+	]
+}
+```
+
+Si no se envía `pets` (o se envía vacío), el comportamiento es exactamente el mismo de antes.
+
+> **Punto de transacción:** este endpoint realiza varias escrituras (el estudiante y cada mascota). Con un ORM/SQL, todas deben ejecutarse dentro de una transacción: si una mascota falla (por ejemplo, por nombre duplicado), el estudiante y las mascotas anteriores no deben quedar guardados. En esta versión en memoria la implementación es secuencial y **no** hace rollback, a propósito, para que la actividad de ORM/transacciones parta de ese problema.
 
 ### Modelo de datos
 

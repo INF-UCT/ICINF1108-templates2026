@@ -8,6 +8,6 @@ import { StudentsModule } from "@/students/students.module"
 	imports: [forwardRef(() => StudentsModule)],
 	controllers: [PetsController],
 	providers: [PetsService, PetsRepository],
-	exports: [PetsService],
+	exports: [PetsService, PetsRepository],
 })
 export class PetsModule {}

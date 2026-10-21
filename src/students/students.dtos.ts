@@ -1,4 +1,6 @@
+import { Type } from "class-transformer"
 import {
+	IsArray,
 	IsEmail,
 	IsInt,
 	IsNotEmpty,
@@ -8,7 +10,10 @@ import {
 	Matches,
 	Max,
 	Min,
+	ValidateNested,
 } from "class-validator"
+
+import { CreatePetDto } from "@/pets/pets.dtos"
 
 const NO_HTML_PATTERN = /^[^<>]*$/
 const NO_HTML_MESSAGE = "No se permiten etiquetas HTML"
@@ -42,6 +47,12 @@ export class CreateStudentDto {
 	@Min(18, { message: "La edad debe ser al menos 18" })
 	@Max(99, { message: "La edad debe ser como máximo 99" })
 	age!: number
+
+	@IsOptional()
+	@IsArray({ message: "Las mascotas deben ser una lista" })
+	@ValidateNested({ each: true })
+	@Type(() => CreatePetDto)
+	pets?: CreatePetDto[]
 }
 
 export class UpdateStudentDto {

@@ -3,12 +3,17 @@ import { ConflictException, Injectable, NotFoundException } from "@nestjs/common
 
 import { Student } from "./students.entity"
 import { StudentsRepository } from "./students.repository"
+import { Pet } from "@/pets/pets.entity"
+import { PetsRepository } from "@/pets/pets.repository"
 import { CreateStudentDto, UpdateStudentDto } from "@/students/students.dtos"
 import type { ValidationErrors } from "@/shared/response"
 
 @Injectable()
 export class StudentsService {
-	constructor(private readonly studentsRepository: StudentsRepository) {}
+	constructor(
+		private readonly studentsRepository: StudentsRepository,
+		private readonly petsRepository: PetsRepository,
+	) {}
 
 	public async findAll(): Promise<Student[]> {
 		return this.studentsRepository
@@ -40,7 +45,37 @@ export class StudentsService {
 			updatedAt: now,
 		}
 
-		return this.studentsRepository.save(student)
+		this.studentsRepository.save(student)
+
+		// En SQL/ORM, insertar el estudiante y sus mascotas debe ir dentro de una
+		// transacción: si una mascota falla, el estudiante no debe quedar creado.
+		for (const petData of data.pets ?? []) {
+			const existing = this.petsRepository.findByStudentAndName(student.id, petData.name)
+
+			if (existing) {
+				throw new ConflictException({
+					message: "Conflicto con datos existentes",
+					errors: {
+						name: { message: "Ya tienes una mascota con ese nombre" },
+					},
+				})
+			}
+
+			const petNow = new Date()
+			const pet: Pet = {
+				id: randomUUID(),
+				studentId: student.id,
+				name: petData.name,
+				species: petData.species,
+				age: petData.age,
+				createdAt: petNow,
+				updatedAt: petNow,
+			}
+
+			this.petsRepository.save(pet)
+		}
+
+		return student
 	}
 
 	public async update(id: string, data: UpdateStudentDto): Promise<Student> {
