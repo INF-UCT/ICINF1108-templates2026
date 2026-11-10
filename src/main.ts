@@ -25,8 +25,8 @@ async function bootstrap() {
 			secret: config.sessionSecret,
 			store: new PgSessionStore({
 				conString: config.databaseUrl,
+				// La tabla la crea la migración de Prisma (modelo UserSession).
 				tableName: "user_sessions",
-				createTableIfMissing: true,
 			}),
 			resave: false,
 			saveUninitialized: false,

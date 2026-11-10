@@ -12,10 +12,6 @@ export const config = {
 	databaseUrl:
 		process.env.DATABASE_URL ?? "postgres://postgres:postgres@localhost:5432/icinf1108",
 
-	// Crea/actualiza las tablas a partir de las entidades al iniciar.
-	// Útil en desarrollo; en producción se usan migraciones.
-	databaseSynchronize: process.env.DATABASE_SYNCHRONIZE !== "false",
-
 	sessionSecret: process.env.SESSION_SECRET ?? "cambia-este-secreto-en-produccion",
 	sessionMaxAgeMs: Number(process.env.SESSION_MAX_AGE_MS ?? 1000 * 60 * 60 * 8),
 

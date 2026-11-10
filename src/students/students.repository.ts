@@ -1,19 +1,15 @@
 import { Injectable } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
+import type { Prisma, Student } from "@prisma/client"
 import { isUUID } from "class-validator"
-import { EntityManager, Repository } from "typeorm"
 
-import { Student } from "./students.entity"
+import { PrismaService, PrismaTx } from "@/prisma/prisma.service"
 
 @Injectable()
 export class StudentsRepository {
-	constructor(
-		@InjectRepository(Student)
-		private readonly repository: Repository<Student>,
-	) {}
+	constructor(private readonly prisma: PrismaService) {}
 
 	public findAll(): Promise<Student[]> {
-		return this.repository.find({ order: { createdAt: "DESC" } })
+		return this.prisma.student.findMany({ orderBy: { createdAt: "desc" } })
 	}
 
 	public async findById(id: string): Promise<Student | null> {
@@ -21,28 +17,32 @@ export class StudentsRepository {
 		// igual que un id inexistente para responder 404.
 		if (!isUUID(id)) return null
 
-		return this.repository.findOneBy({ id })
+		return this.prisma.student.findUnique({ where: { id } })
 	}
 
-	public findByEmail(email: string, manager?: EntityManager): Promise<Student | null> {
-		return this.repo(manager).findOneBy({ email })
+	public findByEmail(email: string, tx?: PrismaTx): Promise<Student | null> {
+		return this.client(tx).student.findUnique({ where: { email } })
 	}
 
-	public findByUsername(username: string, manager?: EntityManager): Promise<Student | null> {
-		return this.repo(manager).findOneBy({ username })
+	public findByUsername(username: string, tx?: PrismaTx): Promise<Student | null> {
+		return this.client(tx).student.findUnique({ where: { username } })
 	}
 
-	public save(student: Partial<Student>, manager?: EntityManager): Promise<Student> {
-		return this.repo(manager).save(student)
+	public create(data: Prisma.StudentCreateInput, tx?: PrismaTx): Promise<Student> {
+		return this.client(tx).student.create({ data })
+	}
+
+	public update(id: string, data: Prisma.StudentUpdateInput): Promise<Student> {
+		return this.prisma.student.update({ where: { id }, data })
 	}
 
 	public async delete(id: string): Promise<void> {
-		await this.repository.delete({ id })
+		await this.prisma.student.delete({ where: { id } })
 	}
 
-	// Dentro de una transacción se usa el repositorio del EntityManager de esa
-	// transacción; fuera de ella, el repositorio normal.
-	private repo(manager?: EntityManager): Repository<Student> {
-		return manager ? manager.getRepository(Student) : this.repository
+	// Dentro de una transacción se usa el cliente de esa transacción;
+	// fuera de ella, el cliente normal.
+	private client(tx?: PrismaTx): PrismaTx {
+		return tx ?? this.prisma
 	}
 }

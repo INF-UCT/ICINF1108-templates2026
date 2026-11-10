@@ -1,4 +1,4 @@
-.PHONY: install dev build lint format format-check clean check-tools up down logs db db-reset
+.PHONY: install dev build lint format format-check clean check-tools up down logs db db-reset migrate
 
 check-tools:
 	@if ! command -v node >/dev/null 2>&1; then \
@@ -46,6 +46,11 @@ logs:
 # Levanta solo PostgreSQL (para correr la API con `make dev` fuera de Docker)
 db:
 	docker compose up -d db
+
+# Crea una migración nueva a partir de prisma/schema.prisma (con la API en Docker)
+# Uso: make migrate name=agrega_campo_x
+migrate:
+	docker compose exec api pnpm exec prisma migrate dev --name $(name)
 
 # Borra la base de datos (elimina el volumen pgdata)
 db-reset:

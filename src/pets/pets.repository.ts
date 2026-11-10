@@ -1,19 +1,15 @@
 import { Injectable } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
+import type { Pet, Prisma } from "@prisma/client"
 import { isUUID } from "class-validator"
-import { EntityManager, Repository } from "typeorm"
 
-import { Pet } from "./pets.entity"
+import { PrismaService, PrismaTx } from "@/prisma/prisma.service"
 
 @Injectable()
 export class PetsRepository {
-	constructor(
-		@InjectRepository(Pet)
-		private readonly repository: Repository<Pet>,
-	) {}
+	constructor(private readonly prisma: PrismaService) {}
 
 	public findAllByStudent(studentId: string): Promise<Pet[]> {
-		return this.repository.find({ where: { studentId }, order: { createdAt: "DESC" } })
+		return this.prisma.pet.findMany({ where: { studentId }, orderBy: { createdAt: "desc" } })
 	}
 
 	public async findById(id: string): Promise<Pet | null> {
@@ -21,26 +17,26 @@ export class PetsRepository {
 		// igual que un id inexistente para responder 404.
 		if (!isUUID(id)) return null
 
-		return this.repository.findOneBy({ id })
+		return this.prisma.pet.findUnique({ where: { id } })
 	}
 
-	public findByStudentAndName(
-		studentId: string,
-		name: string,
-		manager?: EntityManager,
-	): Promise<Pet | null> {
-		return this.repo(manager).findOneBy({ studentId, name })
+	public findByStudentAndName(studentId: string, name: string, tx?: PrismaTx): Promise<Pet | null> {
+		return this.client(tx).pet.findUnique({ where: { studentId_name: { studentId, name } } })
 	}
 
-	public save(pet: Partial<Pet>, manager?: EntityManager): Promise<Pet> {
-		return this.repo(manager).save(pet)
+	public create(data: Prisma.PetUncheckedCreateInput, tx?: PrismaTx): Promise<Pet> {
+		return this.client(tx).pet.create({ data })
+	}
+
+	public update(id: string, data: Prisma.PetUpdateInput): Promise<Pet> {
+		return this.prisma.pet.update({ where: { id }, data })
 	}
 
 	public async delete(id: string): Promise<void> {
-		await this.repository.delete({ id })
+		await this.prisma.pet.delete({ where: { id } })
 	}
 
-	private repo(manager?: EntityManager): Repository<Pet> {
-		return manager ? manager.getRepository(Pet) : this.repository
+	private client(tx?: PrismaTx): PrismaTx {
+		return tx ?? this.prisma
 	}
 }

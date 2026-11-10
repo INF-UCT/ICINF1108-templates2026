@@ -2,8 +2,7 @@ import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/co
 
 import { hashPassword, verifyPassword } from "./password"
 import { RegisterDto, LoginDto } from "@/auth/auth.dtos"
-import { PublicUser, User } from "@/users/user.entity"
-import { UsersRepository } from "@/users/users.repository"
+import { PublicUser, UsersRepository } from "@/users/users.repository"
 
 @Injectable()
 export class AuthService {
@@ -21,13 +20,11 @@ export class AuthService {
 			})
 		}
 
-		const user = await this.usersRepository.save({
+		return this.usersRepository.create({
 			name: data.name,
 			email: data.email,
 			passwordHash: await hashPassword(data.password),
 		})
-
-		return this.toPublic(user)
 	}
 
 	public async login(data: LoginDto): Promise<PublicUser> {
@@ -39,17 +36,12 @@ export class AuthService {
 			throw new UnauthorizedException("Correo o contraseña incorrectos")
 		}
 
-		return this.toPublic(user)
-	}
-
-	public async findById(id: string): Promise<PublicUser | null> {
-		const user = await this.usersRepository.findById(id)
-		return user ? this.toPublic(user) : null
-	}
-
-	private toPublic(user: User): PublicUser {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const { passwordHash, ...rest } = user
-		return rest
+		const { passwordHash, ...publicUser } = user
+		return publicUser
+	}
+
+	public findById(id: string): Promise<PublicUser | null> {
+		return this.usersRepository.findById(id)
 	}
 }

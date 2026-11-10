@@ -13,22 +13,27 @@
         "start:dev": "nest start --watch --no-shell",
         "start:debug": "nest start --debug --watch --no-shell",
         "start:prod": "node dist/main",
-        "lint": "NODE_OPTIONS='--disable-warning=MODULE_TYPELESS_PACKAGE_JSON' eslint \"{src,apps,libs}/**/*.ts\" --fix"
+        "lint": "NODE_OPTIONS='--disable-warning=MODULE_TYPELESS_PACKAGE_JSON' eslint \"{src,apps,libs}/**/*.ts\" --fix",
+        "postinstall": "prisma generate",
+        "prisma:generate": "prisma generate",
+        "prisma:migrate": "prisma migrate dev",
+        "prisma:deploy": "prisma migrate deploy",
+        "prisma:studio": "prisma studio"
     },
     "dependencies": {
         "@nestjs/common": "^11.0.1",
         "@nestjs/core": "^11.0.1",
         "@nestjs/platform-express": "^11.0.1",
         "@nestjs/swagger": "^11.2.5",
-        "@nestjs/typeorm": "^11.0.0",
+        "@prisma/client": "^6.16.0",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.15.1",
         "connect-pg-simple": "^10.0.0",
         "express-session": "^1.18.1",
         "pg": "^8.16.0",
+        "prisma": "^6.16.0",
         "reflect-metadata": "^0.2.2",
-        "rxjs": "^7.8.1",
-        "typeorm": "^0.3.27"
+        "rxjs": "^7.8.1"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.2.0",
@@ -55,5 +60,12 @@
         "tsconfig-paths": "^4.2.0",
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.53.1"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "@prisma/client",
+            "@prisma/engines",
+            "prisma"
+        ]
     }
 }

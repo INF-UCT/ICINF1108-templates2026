@@ -1,6 +1,6 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from "@nestjs/common"
 import type { Response } from "express"
-import { QueryFailedError } from "typeorm"
+import { Prisma } from "@prisma/client"
 import { ApiResponse, ValidationErrors } from "./response"
 
 @Catch()
@@ -64,9 +64,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
 	}
 
 	private isUniqueViolation(exception: unknown): boolean {
+		// P2002: violación de una restricción UNIQUE en Prisma.
 		return (
-			exception instanceof QueryFailedError &&
-			(exception.driverError as { code?: string } | undefined)?.code === "23505"
+			exception instanceof Prisma.PrismaClientKnownRequestError && exception.code === "P2002"
 		)
 	}
 

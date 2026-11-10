@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common"
+import type { Pet } from "@prisma/client"
 
-import { Pet } from "./pets.entity"
 import { PetsRepository } from "./pets.repository"
 import { CreatePetDto, UpdatePetDto } from "@/pets/pets.dtos"
 import { StudentsService } from "@/students/students.service"
@@ -22,7 +22,7 @@ export class PetsService {
 		await this.assertStudentExists(studentId)
 		await this.assertNoConflicts(studentId, data)
 
-		return this.petsRepository.save({
+		return this.petsRepository.create({
 			studentId,
 			name: data.name,
 			species: data.species,
@@ -31,14 +31,14 @@ export class PetsService {
 	}
 
 	public async update(studentId: string, petId: string, data: UpdatePetDto): Promise<Pet> {
-		const existing = await this.findOwned(studentId, petId)
+		await this.findOwned(studentId, petId)
 		await this.assertNoConflicts(studentId, data, petId)
 
-		return this.petsRepository.save({
-			...existing,
-			name: data.name ?? existing.name,
-			species: data.species ?? existing.species,
-			age: data.age ?? existing.age,
+		// Los campos `undefined` no se modifican.
+		return this.petsRepository.update(petId, {
+			name: data.name,
+			species: data.species,
+			age: data.age,
 		})
 	}
 

@@ -1,16 +1,16 @@
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common"
-import { DataSource, EntityManager } from "typeorm"
+import type { Student } from "@prisma/client"
 
-import { Student } from "./students.entity"
 import { StudentsRepository } from "./students.repository"
 import { PetsRepository } from "@/pets/pets.repository"
+import { PrismaService, PrismaTx } from "@/prisma/prisma.service"
 import { CreateStudentDto, UpdateStudentDto } from "@/students/students.dtos"
 import type { ValidationErrors } from "@/shared/response"
 
 @Injectable()
 export class StudentsService {
 	constructor(
-		private readonly dataSource: DataSource,
+		private readonly prisma: PrismaService,
 		private readonly studentsRepository: StudentsRepository,
 		private readonly petsRepository: PetsRepository,
 	) {}
@@ -32,24 +32,24 @@ export class StudentsService {
 	public create(data: CreateStudentDto): Promise<Student> {
 		// El estudiante y sus mascotas se insertan en una sola transacción: si
 		// cualquier mascota falla, Postgres hace rollback y no queda nada guardado.
-		return this.dataSource.transaction(async (manager) => {
-			await this.assertNoConflicts(data, undefined, manager)
+		return this.prisma.$transaction(async (tx) => {
+			await this.assertNoConflicts(data, undefined, tx)
 
-			const student = await this.studentsRepository.save(
+			const student = await this.studentsRepository.create(
 				{
 					name: data.name,
 					username: data.username,
 					email: data.email,
 					age: data.age,
 				},
-				manager,
+				tx,
 			)
 
 			for (const petData of data.pets ?? []) {
 				const existing = await this.petsRepository.findByStudentAndName(
 					student.id,
 					petData.name,
-					manager,
+					tx,
 				)
 
 				if (existing) {
@@ -61,14 +61,14 @@ export class StudentsService {
 					})
 				}
 
-				await this.petsRepository.save(
+				await this.petsRepository.create(
 					{
 						studentId: student.id,
 						name: petData.name,
 						species: petData.species,
 						age: petData.age ?? null,
 					},
-					manager,
+					tx,
 				)
 			}
 
@@ -77,15 +77,15 @@ export class StudentsService {
 	}
 
 	public async update(id: string, data: UpdateStudentDto): Promise<Student> {
-		const existing = await this.findById(id)
+		await this.findById(id)
 		await this.assertNoConflicts(data, id)
 
-		return this.studentsRepository.save({
-			...existing,
-			name: data.name ?? existing.name,
-			username: data.username ?? existing.username,
-			email: data.email ?? existing.email,
-			age: data.age ?? existing.age,
+		// Los campos `undefined` no se modifican.
+		return this.studentsRepository.update(id, {
+			name: data.name,
+			username: data.username,
+			email: data.email,
+			age: data.age,
 		})
 	}
 
@@ -101,12 +101,12 @@ export class StudentsService {
 	private async assertNoConflicts(
 		data: { email?: string; username?: string },
 		exceptId?: string,
-		manager?: EntityManager,
+		tx?: PrismaTx,
 	): Promise<void> {
 		const conflicts: ValidationErrors = {}
 
 		if (data.email) {
-			const existing = await this.studentsRepository.findByEmail(data.email, manager)
+			const existing = await this.studentsRepository.findByEmail(data.email, tx)
 
 			if (existing && existing.id !== exceptId) {
 				conflicts.email = { message: "El correo electrónico ya está en uso" }
@@ -114,7 +114,7 @@ export class StudentsService {
 		}
 
 		if (data.username) {
-			const existing = await this.studentsRepository.findByUsername(data.username, manager)
+			const existing = await this.studentsRepository.findByUsername(data.username, tx)
 
 			if (existing && existing.id !== exceptId) {
 				conflicts.username = { message: "El nombre de usuario ya está en uso" }
