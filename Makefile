@@ -1,4 +1,4 @@
-.PHONY: install dev build lint format format-check clean check-tools
+.PHONY: install dev build lint format format-check clean check-tools up down logs db db-reset
 
 check-tools:
 	@if ! command -v node >/dev/null 2>&1; then \
@@ -30,3 +30,23 @@ format-check:
 
 clean:
 	rm -rf dist coverage node_modules
+
+# --- Docker -----------------------------------------------------------------
+
+# Levanta la API (modo dev) y PostgreSQL
+up:
+	docker compose up --build
+
+down:
+	docker compose down
+
+logs:
+	docker compose logs -f
+
+# Levanta solo PostgreSQL (para correr la API con `make dev` fuera de Docker)
+db:
+	docker compose up -d db
+
+# Borra la base de datos (elimina el volumen pgdata)
+db-reset:
+	docker compose down -v

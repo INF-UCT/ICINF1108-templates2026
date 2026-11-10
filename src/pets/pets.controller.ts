@@ -1,8 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common"
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common"
+import { ApiCookieAuth } from "@nestjs/swagger"
 
+import { SessionGuard } from "@/auth/session.guard"
 import { PetsService } from "@/pets/pets.service"
 import { CreatePetDto, UpdatePetDto } from "@/pets/pets.dtos"
 
+@ApiCookieAuth()
+@UseGuards(SessionGuard)
 @Controller("api/students/:studentId/pets")
 export class PetsController {
 	constructor(private readonly petsService: PetsService) {}

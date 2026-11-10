@@ -1,34 +1,48 @@
 import { Injectable } from "@nestjs/common"
+import { InjectRepository } from "@nestjs/typeorm"
+import { isUUID } from "class-validator"
+import { EntityManager, Repository } from "typeorm"
 
 import { Student } from "./students.entity"
-import { InMemoryStore } from "@/shared/in-memory-store"
 
 @Injectable()
 export class StudentsRepository {
-	private readonly store = new InMemoryStore<Student>()
+	constructor(
+		@InjectRepository(Student)
+		private readonly repository: Repository<Student>,
+	) {}
 
-	public findAll(): Student[] {
-		return this.store.findAll()
+	public findAll(): Promise<Student[]> {
+		return this.repository.find({ order: { createdAt: "DESC" } })
 	}
 
-	public findById(id: string): Student | undefined {
-		return this.store.get(id)
+	public async findById(id: string): Promise<Student | null> {
+		// Un id que no es UUID haría fallar la consulta en Postgres; se trata
+		// igual que un id inexistente para responder 404.
+		if (!isUUID(id)) return null
+
+		return this.repository.findOneBy({ id })
 	}
 
-	public findByEmail(email: string): Student | undefined {
-		return this.store.findBy((student) => student.email === email)[0]
+	public findByEmail(email: string, manager?: EntityManager): Promise<Student | null> {
+		return this.repo(manager).findOneBy({ email })
 	}
 
-	public findByUsername(username: string): Student | undefined {
-		return this.store.findBy((student) => student.username === username)[0]
+	public findByUsername(username: string, manager?: EntityManager): Promise<Student | null> {
+		return this.repo(manager).findOneBy({ username })
 	}
 
-	public save(student: Student): Student {
-		this.store.set(student)
-		return student
+	public save(student: Partial<Student>, manager?: EntityManager): Promise<Student> {
+		return this.repo(manager).save(student)
 	}
 
-	public delete(id: string): void {
-		this.store.delete(id)
+	public async delete(id: string): Promise<void> {
+		await this.repository.delete({ id })
+	}
+
+	// Dentro de una transacción se usa el repositorio del EntityManager de esa
+	// transacción; fuera de ella, el repositorio normal.
+	private repo(manager?: EntityManager): Repository<Student> {
+		return manager ? manager.getRepository(Student) : this.repository
 	}
 }

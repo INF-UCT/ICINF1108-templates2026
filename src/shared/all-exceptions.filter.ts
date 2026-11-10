@@ -1,5 +1,6 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from "@nestjs/common"
 import type { Response } from "express"
+import { QueryFailedError } from "typeorm"
 import { ApiResponse, ValidationErrors } from "./response"
 
 @Catch()
@@ -35,6 +36,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
 				message = exception.message
 				error = message
 			}
+		} else if (this.isUniqueViolation(exception)) {
+			// Respaldo por si dos peticiones simultáneas pasan la validación de
+			// unicidad del servicio: la restricción UNIQUE de Postgres responde.
+			code = HttpStatus.CONFLICT
+			message = "Conflicto con datos existentes"
+			error = message
 		} else {
 			code = HttpStatus.INTERNAL_SERVER_ERROR
 			message = "Error interno del servidor"
@@ -54,6 +61,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
 					errors,
 				),
 			)
+	}
+
+	private isUniqueViolation(exception: unknown): boolean {
+		return (
+			exception instanceof QueryFailedError &&
+			(exception.driverError as { code?: string } | undefined)?.code === "23505"
+		)
 	}
 
 	private isValidationErrorArray(items: unknown[]): boolean {

@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "Students API",
-        "description": "CRUD en memoria para la entidad Student (NestJS). Reemplaza {{studentId}} manualmente o ejecuta 'Create Student' y copia el id de la respuesta.",
+        "description": "CRUD con PostgreSQL para Student y Pet (NestJS), protegido con sesiones. Ejecuta primero 'Auth > Register' o 'Auth > Login': Postman guarda la cookie de sesión y la envía en las demás peticiones. Reemplaza {{studentId}} manualmente o ejecuta 'Create Student' y copia el id de la respuesta.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "variable": [
@@ -15,6 +15,99 @@
         }
     ],
     "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Register",
+                    "request": {
+                        "method": "POST",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Ayudante Backend\",\n    \"email\": \"ayudante@test.cl\",\n    \"password\": \"secreto123\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"ayudante@test.cl\",\n    \"password\": \"secreto123\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Me",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "me"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/logout",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "logout"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
         {
             "name": "Students CRUD",
             "item": [
@@ -34,8 +127,13 @@
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/students",
-                            "host": ["{{baseUrl}}"],
-                            "path": ["api", "students"]
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students"
+                            ]
                         }
                     }
                 },
@@ -45,8 +143,13 @@
                         "method": "GET",
                         "url": {
                             "raw": "{{baseUrl}}/api/students",
-                            "host": ["{{baseUrl}}"],
-                            "path": ["api", "students"]
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students"
+                            ]
                         }
                     }
                 },
@@ -56,8 +159,14 @@
                         "method": "GET",
                         "url": {
                             "raw": "{{baseUrl}}/api/students/{{studentId}}",
-                            "host": ["{{baseUrl}}"],
-                            "path": ["api", "students", "{{studentId}}"]
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "{{studentId}}"
+                            ]
                         }
                     }
                 },
@@ -77,8 +186,14 @@
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/students/{{studentId}}",
-                            "host": ["{{baseUrl}}"],
-                            "path": ["api", "students", "{{studentId}}"]
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "{{studentId}}"
+                            ]
                         }
                     }
                 },
@@ -88,8 +203,14 @@
                         "method": "DELETE",
                         "url": {
                             "raw": "{{baseUrl}}/api/students/{{studentId}}",
-                            "host": ["{{baseUrl}}"],
-                            "path": ["api", "students", "{{studentId}}"]
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "{{studentId}}"
+                            ]
                         }
                     }
                 }
@@ -114,8 +235,13 @@
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/students",
-                            "host": ["{{baseUrl}}"],
-                            "path": ["api", "students"]
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students"
+                            ]
                         }
                     }
                 },
@@ -135,8 +261,13 @@
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/students",
-                            "host": ["{{baseUrl}}"],
-                            "path": ["api", "students"]
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students"
+                            ]
                         }
                     }
                 },
@@ -146,7 +277,9 @@
                         "method": "GET",
                         "url": {
                             "raw": "{{baseUrl}}/api/students/00000000-0000-0000-0000-000000000000",
-                            "host": ["{{baseUrl}}"],
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
                             "path": [
                                 "api",
                                 "students",

@@ -24,6 +24,17 @@
 			theme="light"
 		></ol>
 		<main x-data="app" x-cloak class="mx-auto max-w-3xl px-4 py-12">
+			<div class="mb-6 flex items-center justify-end gap-3 text-sm text-zinc-500">
+				<span x-show="user" x-text="`Sesión iniciada como ${user?.name}`"></span>
+				<button
+					type="button"
+					@click="logout()"
+					class="rounded-md border border-zinc-300 px-3 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100"
+				>
+					Cerrar sesión
+				</button>
+			</div>
+
 			<header class="flex items-end justify-between border-b border-zinc-200 pb-8 mb-10">
 				<div>
 					<h1 class="text-3xl font-semibold tracking-tight">Estudiantes</h1>

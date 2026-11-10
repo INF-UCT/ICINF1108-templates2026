@@ -1,34 +1,46 @@
 import { Injectable } from "@nestjs/common"
+import { InjectRepository } from "@nestjs/typeorm"
+import { isUUID } from "class-validator"
+import { EntityManager, Repository } from "typeorm"
 
 import { Pet } from "./pets.entity"
-import { InMemoryStore } from "@/shared/in-memory-store"
 
 @Injectable()
 export class PetsRepository {
-	private readonly store = new InMemoryStore<Pet>()
+	constructor(
+		@InjectRepository(Pet)
+		private readonly repository: Repository<Pet>,
+	) {}
 
-	public findAllByStudent(studentId: string): Pet[] {
-		return this.store.findBy((pet) => pet.studentId === studentId)
+	public findAllByStudent(studentId: string): Promise<Pet[]> {
+		return this.repository.find({ where: { studentId }, order: { createdAt: "DESC" } })
 	}
 
-	public findById(id: string): Pet | undefined {
-		return this.store.get(id)
+	public async findById(id: string): Promise<Pet | null> {
+		// Un id que no es UUID haría fallar la consulta en Postgres; se trata
+		// igual que un id inexistente para responder 404.
+		if (!isUUID(id)) return null
+
+		return this.repository.findOneBy({ id })
 	}
 
-	public findByStudentAndName(studentId: string, name: string): Pet | undefined {
-		return this.store.findBy((pet) => pet.studentId === studentId && pet.name === name)[0]
+	public findByStudentAndName(
+		studentId: string,
+		name: string,
+		manager?: EntityManager,
+	): Promise<Pet | null> {
+		return this.repo(manager).findOneBy({ studentId, name })
 	}
 
-	public save(pet: Pet): Pet {
-		this.store.set(pet)
-		return pet
+	public save(pet: Partial<Pet>, manager?: EntityManager): Promise<Pet> {
+		return this.repo(manager).save(pet)
 	}
 
-	public delete(id: string): void {
-		this.store.delete(id)
+	public async delete(id: string): Promise<void> {
+		await this.repository.delete({ id })
 	}
 
-	public deleteByStudent(studentId: string): void {
-		this.store.deleteBy((pet) => pet.studentId === studentId)
+	private repo(manager?: EntityManager): Repository<Pet> {
+		return manager ? manager.getRepository(Pet) : this.repository
 	}
 }
