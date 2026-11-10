@@ -1,5 +1,6 @@
 using estudiantes_icinf.Models;
-using estudiantes_icinf.Repositories;
+using estudiantes_icinf.Services;
+using estudiantes_icinf.Shared;
 
 namespace estudiantes_icinf.Endpoints;
 
@@ -7,40 +8,27 @@ public static class StudentEndpoints
 {
     public static void MapStudentEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/students").WithTags("Students");
+        // RequireAuthorization: todos los endpoints del grupo exigen sesión.
+        var group = app.MapGroup("/api/students").WithTags("Students").RequireAuthorization();
 
-        group.MapGet("/", async (IStudentRepository repo) =>
-            Results.Ok(await repo.GetAllAsync()));
-
-        group.MapGet("/{id:guid}", async (Guid id, IStudentRepository repo) =>
-            Results.Ok(await repo.GetByIdAsync(id)));
-
-        group.MapPost("/", async (CreateStudentDto dto, IStudentRepository repo) =>
+        group.MapGet("/", async (StudentsService service) =>
         {
-            if (await repo.GetByEmailAsync(dto.Email) is not null)
-            {
-                return Results.Conflict(new { error = "El email ya esta registrado." });
-            }
-
-            var creado = await repo.AddAsync(dto);
-            return Results.Created($"/api/students/{creado.Id}", creado);
+            var students = await service.FindAllAsync();
+            return ApiResults.Ok(new { total = students.Count, items = students });
         });
 
-        group.MapPatch("/{id:guid}", async (Guid id, UpdateStudentDto dto, IStudentRepository repo) =>
-        {
-            if (dto.Email is not null && await repo.GetByEmailAsync(dto.Email, id) is not null)
-            {
-                return Results.Conflict(new { error = "El email ya esta registrado." });
-            }
+        group.MapGet("/{id}", async (string id, StudentsService service) =>
+            ApiResults.Ok(await service.FindByIdAsync(id)));
 
-            var actualizado = await repo.UpdateAsync(id, dto);
-            return Results.Ok(actualizado);
-        });
+        group.MapPost("/", async (CreateStudentDto body, StudentsService service) =>
+                ApiResults.Created(await service.CreateAsync(body)))
+            .AddEndpointFilter<ValidationFilter<CreateStudentDto>>();
 
-        group.MapDelete("/{id:guid}", async (Guid id, IStudentRepository repo) =>
-        {
-            await repo.DeleteAsync(id);
-            return Results.NoContent();
-        });
+        group.MapPatch("/{id}", async (string id, UpdateStudentDto body, StudentsService service) =>
+                ApiResults.Updated(await service.UpdateAsync(id, body)))
+            .AddEndpointFilter<ValidationFilter<UpdateStudentDto>>();
+
+        group.MapDelete("/{id}", async (string id, StudentsService service) =>
+            ApiResults.Deleted(await service.DeleteAsync(id)));
     }
 }

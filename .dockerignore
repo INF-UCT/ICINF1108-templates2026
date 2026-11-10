@@ -1,0 +1,32 @@
+# Build artifacts (recreated inside the image)
+bin
+obj
+out
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Version control and editor config
+.git
+.gitignore
+.vs
+.vscode
+.idea
+*.swp
+*.user
+
+# Docs and tooling not needed to build the image
+README.md
+postman
+Makefile
+Dockerfile
+docker-compose.yml
+.dockerignore
+*.http
+
+# OS / logs
+.DS_Store
+Thumbs.db
+*.log

@@ -1,28 +1,88 @@
-@estudiantes_icinf_HostAddress = http://localhost:5101
+@host = http://localhost:3000
+@studentId = reemplazar-con-un-id
+@petId = reemplazar-con-un-id
 
-### Listar todos los estudiantes
-GET {{estudiantes_icinf_HostAddress}}/api/students
+# Todos los endpoints de /api/students requieren sesión. Ejecuta primero
+# "Registrarse" o "Iniciar sesión": el cliente guarda la cookie `sid` y la
+# envía en las peticiones siguientes.
 
-### Obtener un estudiante por id
-GET {{estudiantes_icinf_HostAddress}}/api/students/5f8a1b2c-3d4e-4f5a-8b6c-7d8e9f0a1b2c
-
-### Crear un estudiante
-POST {{estudiantes_icinf_HostAddress}}/api/students
+### Registrarse (crea la cuenta e inicia sesión)
+POST {{host}}/api/auth/register
 Content-Type: application/json
 
 {
-  "name": "Pedro Diaz",
+  "name": "Ayudantia",
+  "email": "ayudantia@test.cl",
+  "password": "secreto123"
+}
+
+### Iniciar sesión
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "ayudantia@test.cl",
+  "password": "secreto123"
+}
+
+### Usuario actual
+GET {{host}}/api/auth/me
+
+### Listar estudiantes
+GET {{host}}/api/students
+
+### Obtener un estudiante por id
+GET {{host}}/api/students/{{studentId}}
+
+### Crear un estudiante (con mascotas opcionales, en una transacción)
+POST {{host}}/api/students
+Content-Type: application/json
+
+{
+  "name": "Pedro Díaz",
+  "username": "pedro_diaz",
   "email": "pedro.diaz@alu.uct.cl",
-  "age": 22
+  "age": 22,
+  "pets": [
+    { "name": "Firulais", "species": "perro", "age": 3 },
+    { "name": "Michi", "species": "gato" }
+  ]
 }
 
 ### Actualizar un estudiante (parcial)
-PATCH {{estudiantes_icinf_HostAddress}}/api/students/5f8a1b2c-3d4e-4f5a-8b6c-7d8e9f0a1b2c
+PATCH {{host}}/api/students/{{studentId}}
 Content-Type: application/json
 
 {
-  "age": 21
+  "age": 23
 }
 
-### Eliminar un estudiante
-DELETE {{estudiantes_icinf_HostAddress}}/api/students/5f8a1b2c-3d4e-4f5a-8b6c-7d8e9f0a1b2c
+### Eliminar un estudiante (elimina también sus mascotas)
+DELETE {{host}}/api/students/{{studentId}}
+
+### Listar mascotas de un estudiante
+GET {{host}}/api/students/{{studentId}}/pets
+
+### Crear una mascota
+POST {{host}}/api/students/{{studentId}}/pets
+Content-Type: application/json
+
+{
+  "name": "Pelusa",
+  "species": "cobayo",
+  "age": 2
+}
+
+### Actualizar una mascota (parcial)
+PATCH {{host}}/api/students/{{studentId}}/pets/{{petId}}
+Content-Type: application/json
+
+{
+  "age": 3
+}
+
+### Eliminar una mascota
+DELETE {{host}}/api/students/{{studentId}}/pets/{{petId}}
+
+### Cerrar sesión
+POST {{host}}/api/auth/logout
