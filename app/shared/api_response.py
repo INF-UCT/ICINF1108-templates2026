@@ -63,7 +63,17 @@ async def envelope_middleware(
         body_bytes = b"".join([chunk async for chunk in response.body_iterator])
 
     data = json.loads(body_bytes)
-    message = MESSAGE_BY_METHOD.get(request.method, "OK")
+    # Un POST que no crea nada (login, logout) responde 200 "Operación exitosa".
+    if request.method == "POST" and response.status_code != 201:
+        message = MESSAGE_BY_METHOD["GET"]
+    else:
+        message = MESSAGE_BY_METHOD.get(request.method, "OK")
     body = success_response(response.status_code, message, data)
 
-    return JSONResponse(status_code=response.status_code, content=body)
+    wrapped = JSONResponse(status_code=response.status_code, content=body)
+
+    # Se conservan las cookies (por ejemplo, la de sesión al iniciar sesión).
+    for cookie in response.headers.getlist("set-cookie"):
+        wrapped.headers.append("set-cookie", cookie)
+
+    return wrapped

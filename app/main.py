@@ -2,13 +2,16 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import IntegrityError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.auth.auth_controller import router as auth_router
 from app.pets.pets_controller import router as pets_router
 from app.shared.api_response import envelope_middleware
 from app.shared.exceptions import (
     generic_exception_handler,
     http_exception_handler,
+    integrity_error_handler,
     validation_exception_handler,
 )
 from app.students.students_controller import router as students_router
@@ -18,7 +21,9 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="FastAPI CRUD Students & Pets",
         description=(
-            "API de un CRUD en memoria para la entidad Student y sus mascotas (Pet)"
+            "API de un CRUD con PostgreSQL para la entidad Student y sus mascotas "
+            "(Pet), protegida con sesiones. Inicia sesión en /api/auth/login para "
+            "usar los endpoints."
         ),
         version="1.0",
     )
@@ -32,10 +37,12 @@ def create_app() -> FastAPI:
 
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+    app.add_exception_handler(IntegrityError, integrity_error_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
 
     app.middleware("http")(envelope_middleware)
 
+    app.include_router(auth_router)
     app.include_router(students_router)
     app.include_router(pets_router)
 

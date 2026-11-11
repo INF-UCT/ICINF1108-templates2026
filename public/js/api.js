@@ -32,9 +32,17 @@ import { toast as sonnerToast } from "https://cdn.jsdelivr.net/npm/vanilla-sonne
  *   createdAt: string,
  *   updatedAt: string,
  * }} Pet
+ * @typedef {{
+ *   id: string,
+ *   name: string,
+ *   email: string,
+ *   createdAt: string,
+ *   updatedAt: string,
+ * }} User
  */
 
 const API_BASE = "/api"
+const LOGIN_PAGE = "/login.html"
 
 /**
  * Petición a la API. Devuelve `data` en caso de éxito o lanza el payload
@@ -50,6 +58,14 @@ async function api(path, options = {}) {
 		headers: { "Content-Type": "application/json" },
 		...options,
 	})
+
+	// Sin sesión (o sesión expirada): se envía al login y, al entrar, se
+	// vuelve a la página actual. En el propio login el 401 se muestra como error.
+	if (response.status === 401 && window.location.pathname !== LOGIN_PAGE) {
+		const next = encodeURIComponent(window.location.pathname + window.location.search)
+		window.location.href = `${LOGIN_PAGE}?next=${next}`
+		return new Promise(() => {})
+	}
 
 	/** @type {ApiPayload} */
 	const payload = await response.json()
@@ -90,4 +106,15 @@ function toast(message, type = "error") {
 	else sonnerToast.error(message)
 }
 
-export { api, normalizeErrors, toast }
+/**
+ * Cierra la sesión actual y vuelve al login.
+ */
+async function logout() {
+	try {
+		await api("/auth/logout", { method: "POST" })
+	} finally {
+		window.location.href = LOGIN_PAGE
+	}
+}
+
+export { api, logout, normalizeErrors, toast }

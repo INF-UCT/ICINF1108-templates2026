@@ -4,6 +4,7 @@ from typing import Final
 from fastapi import HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.shared.api_response import error_response
@@ -84,8 +85,31 @@ PET_MISSING_MESSAGES: Final[dict[str, str]] = {
 }
 
 
+REGISTER_MISSING_MESSAGES: Final[dict[str, str]] = {
+    "name": STUDENT_MISSING_MESSAGES["name"],
+    "email": STUDENT_MISSING_MESSAGES["email"],
+    "password": (
+        "La contraseña debe ser un texto, "
+        "La contraseña debe tener entre 8 y 72 caracteres"
+    ),
+}
+
+LOGIN_MISSING_MESSAGES: Final[dict[str, str]] = {
+    "email": STUDENT_MISSING_MESSAGES["email"],
+    "password": "La contraseña debe ser un texto, La contraseña no puede estar vacía",
+}
+
+
 def _missing_field_message(path: str, field: str) -> str:
-    table = PET_MISSING_MESSAGES if "/pets" in path else STUDENT_MISSING_MESSAGES
+    if path.startswith("/api/auth/register"):
+        table = REGISTER_MISSING_MESSAGES
+    elif path.startswith("/api/auth/login"):
+        table = LOGIN_MISSING_MESSAGES
+    elif "/pets" in path:
+        table = PET_MISSING_MESSAGES
+    else:
+        table = STUDENT_MISSING_MESSAGES
+
     return table.get(field, "El campo es obligatorio")
 
 
@@ -103,6 +127,20 @@ async def http_exception_handler(
         body = error_response(exc.status_code, message, error=message)
 
     return JSONResponse(status_code=exc.status_code, content=body)
+
+
+async def integrity_error_handler(
+    request: Request, exc: IntegrityError
+) -> JSONResponse:
+    # 23505: violación de una restricción UNIQUE. Respaldo por si dos peticiones
+    # simultáneas pasan la validación de unicidad del servicio.
+    if getattr(exc.orig, "sqlstate", None) == "23505":
+        message = "Conflicto con datos existentes"
+        return JSONResponse(
+            status_code=409, content=error_response(409, message, error=message)
+        )
+
+    return await generic_exception_handler(request, exc)
 
 
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:

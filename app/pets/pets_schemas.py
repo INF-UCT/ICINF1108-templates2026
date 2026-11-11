@@ -1,4 +1,5 @@
 from typing import Final
+from uuid import UUID
 
 from pydantic import (
     BaseModel,
@@ -34,8 +35,8 @@ PET_AGE_MESSAGES: Final[dict[str, str]] = {
 class Pet(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    studentId: str
+    id: UUID
+    studentId: UUID
     name: str
     species: str
     age: int | None = None

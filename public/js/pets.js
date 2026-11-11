@@ -1,14 +1,19 @@
 // @ts-check
 // @ts-expect-error - Módulo servido vía CDN; TS no puede resolver la URL.
 import Alpine from "https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/module.esm.js"
-import { api, normalizeErrors, toast } from "./api.js"
+import { api, logout, normalizeErrors, toast } from "./api.js"
 
 /** @typedef {import("./api.js").Student} Student */
 /** @typedef {import("./api.js").Pet} Pet */
 /** @typedef {import("./api.js").ApiPayload} ApiPayload */
+/** @typedef {import("./api.js").User} User */
 
 function createApp() {
 	return {
+		/** @type {User | null} */
+		user: null,
+		logout,
+
 		studentId: new URLSearchParams(window.location.search).get("studentId") || "",
 		student: null,
 		studentError: false,
@@ -23,6 +28,8 @@ function createApp() {
 		deleteModal: { open: false, pet: null, busy: false },
 
 		async init() {
+			this.user = /** @type {User} */ (await api("/auth/me"))
+
 			if (!this.studentId) {
 				this.studentError = true
 				return

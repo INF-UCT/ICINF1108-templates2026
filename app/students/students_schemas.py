@@ -1,4 +1,5 @@
 from typing import Final
+from uuid import UUID
 
 from pydantic import (
     BaseModel,
@@ -41,7 +42,7 @@ STUDENT_AGE_MESSAGES: Final[dict[str, str]] = {
 class Student(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
+    id: UUID
     name: str
     username: str
     email: EmailStr
